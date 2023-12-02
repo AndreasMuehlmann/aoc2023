@@ -1,2 +1,2 @@
-ghc part1.hs -O2
-./part1
+ghc part2.hs -O2
+./part2
