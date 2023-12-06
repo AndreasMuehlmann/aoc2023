@@ -13,13 +13,17 @@ getNumberHelper stringLines x y direction
 getNumber :: [String] -> Int -> Int -> String
 getNumber stringLines x y = getNumberHelper stringLines (x - 1) y (-1) ++ getNumberHelper stringLines x y 1
 
+
+-- TODO: other solution needed. Maybe use parseDigit from before
 solve :: String -> Int -> Int -> Int -> Int
 solve (char:chars) x y accumulator
                 | isDigit char || (char == '.') = solve chars (x + 1) y accumulator
                 | char == '\n' = solve chars 0 (y + 1) accumulator
                 | null chars = accumulator -- sum . map getNumber . map position + rel_positions
-                | otherwise = 0 --solve  chars (x + 1) y (accumulator + (sum . map getNumber . map position + rel_positions))
-                where rel_positions = [(relative_x, relative_y) | relative_x <- [-1, 0, 1], relative_y <- [-1, 0, 1], relative_y /= 0 && relative_x /= 0]
+                | otherwise = 0
+                where rel_positions = [(relativeX, relativeY) | relativeX <- [-1, 0, 1], relativeY <- [-1, 0, 1], relativeY /= 0 || relativeX /= 0]
+                      absXs = map ((+ x) . fst) rel_positions
+                      absYs = map ((+ y) . snd) rel_positions
 main :: IO ()
 main = do
     contents <- readFile "test_part1.txt"
