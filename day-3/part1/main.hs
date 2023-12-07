@@ -2,29 +2,29 @@ module Main where
 
 import Data.Char
 
-getNumberHelper :: [String] -> Int -> Int -> Int -> String
-getNumberHelper stringLines x y direction 
-                | isDigit char && direction < 0 = getNumberHelper stringLines (x + direction) y direction ++ [char]
-                | isDigit char && direction > 0 = char : getNumberHelper stringLines (x + direction) y direction
-                | otherwise = []
-                where char = (stringLines!!y)!!x 
- 
 
-getNumber :: [String] -> Int -> Int -> String
-getNumber stringLines x y = getNumberHelper stringLines (x - 1) y (-1) ++ getNumberHelper stringLines x y 1
+data NumberPos = NumberPosCons Int Int Int deriving Show
 
 
--- TODO: other solution needed. Maybe use parseDigit from before
-solve :: String -> Int -> Int -> Int -> Int
-solve (char:chars) x y accumulator
-                | isDigit char || (char == '.') = solve chars (x + 1) y accumulator
-                | char == '\n' = solve chars 0 (y + 1) accumulator
-                | null chars = accumulator -- sum . map getNumber . map position + rel_positions
-                | otherwise = 0
-                where rel_positions = [(relativeX, relativeY) | relativeX <- [-1, 0, 1], relativeY <- [-1, 0, 1], relativeY /= 0 || relativeX /= 0]
-                      absXs = map ((+ x) . fst) rel_positions
-                      absYs = map ((+ y) . snd) rel_positions
+getNumberHelper :: String -> Int -> Int -> (Int, Int)
+getNumberHelper (char:chars) number len
+                    | isDigit char = getNumberHelper chars (number * 10 + digitToInt char) (len + 1)
+                    | otherwise = (number, len)
+
+getNumber :: String -> (Int, Int)
+getNumber string = getNumberHelper string 0 0
+
+parseNumbers :: String -> [NumberPos] -> Int -> Int-> [NumberPos]
+parseNumbers (char:chars) accumulator x y 
+        | null chars = if isDigit char then NumberPosCons number x y : accumulator else accumulator
+        | isDigit char = parseNumbers (drop (len - 1) chars) digitCell (x + 1) y
+        | char == '\n' = parseNumbers chars accumulator 0 (y + 1)
+        | otherwise = parseNumbers chars accumulator (x + 1) y
+        where (number, len) = getNumber (char:chars)
+              digitCell = NumberPosCons number x y : accumulator
+
 main :: IO ()
 main = do
     contents <- readFile "test_part1.txt"
-    print $ solve contents 0 0 0
+    print $ parseNumbers contents [] 0 0
+
