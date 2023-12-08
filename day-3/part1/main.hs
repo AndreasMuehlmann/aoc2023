@@ -49,6 +49,6 @@ solve string numberPosisitions = solveHelper string numberPosisitions 0 0 0
 
 main :: IO ()
 main = do
-    contents <- readFile "test_part1.txt"
+    contents <- readFile "part1.txt"
     print $  solve contents (parseNumbers contents [] 0 0)
 
