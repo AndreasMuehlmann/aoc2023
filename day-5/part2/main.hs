@@ -4,7 +4,6 @@ import qualified Data.Text as T
 import qualified Data.Text.Read as TR
 import qualified Data.Text.IO as TIO
 
-
 textToInt :: T.Text -> Int
 textToInt text = case TR.decimal text of
     Left _err -> -1
@@ -17,34 +16,47 @@ parseAlmanacMap :: T.Text -> [[Int]]
 parseAlmanacMap = map parseNumbersToList . tail . T.lines
 
 splitIntoAlmanacMaps :: [T.Text] -> [T.Text]
-splitIntoAlmanacMaps = T.splitOn (T.pack "\n\n") . T.unlines . tail . tail 
+splitIntoAlmanacMaps = T.splitOn (T.pack "\n\n") . T.unlines . tail . tail
 
-parseSeeds :: T.Text -> [Int]
-parseSeeds = parseNumbersToList . T.unwords . tail . T.words
+pairs :: [Int] -> [(Int, Int)]
+pairs [] = []
+pairs [element] = []
+pairs [element1, element2] = [(element1, element2)]
+pairs (element1:element2:elements) = (element1, element2) : pairs elements
 
-parseAlmanac :: T.Text -> ([Int], [[[Int]]])
+parseSeeds :: T.Text -> [(Int, Int)]
+parseSeeds = pairs . parseNumbersToList . T.unwords . tail . T.words
+
+parseAlmanac :: T.Text -> ([(Int, Int)], [[[Int]]])
 parseAlmanac text = (parseSeeds $ head linesText, map parseAlmanacMap $ splitIntoAlmanacMaps linesText)
         where linesText = T.lines text
 
-inRangeOfRule :: Int -> [Int] -> Bool
-inRangeOfRule num rule = rule!!1 <= num && num < rule!!1 + last rule
+offsetByRule :: Int -> [Int] -> Int
+offsetByRule num rule = num - rule!!1 + head rule
 
-applyRule :: Int -> [Int] -> Int
-applyRule num rule = num - rule!!1 + head rule
+applyRule :: [Int] -> (Int, Int) -> [(Int, Int)]
+applyRule rule (firstNum, range)
+        | firstInRule && lastInRule= [(offsetByRule firstNum rule, range)]
+        | firstInRule = [(offsetByRule firstNum rule, lastNumRule - firstNum + 1), (offsetByRule firstNum rule + lastNumRule - firstNum, range - rule!!1 + last rule - 1)]
+        | lastInRule = [(0, 0)]
+        | otherwise = [(0, 0)]
+        where lastNum = firstNum + range - 1
+              firstNumRule = rule!!1
+              lastNumRule = firstNumRule + last rule - 1
+              firstInRule = firstNumRule <= firstNum && firstNum <= lastNumRule
+              lastInRule = firstNumRule <= lastNum && lastNum <= lastNumRule
 
-mapByAlamanacMap :: [[Int]] -> Int -> Int
-mapByAlamanacMap alamanacMap num
-        | null fittingRules = num 
-        | otherwise = applyRule num $ head fittingRules
-        where fittingRules = filter (inRangeOfRule num) alamanacMap
+mapByAlamanacMap :: [[Int]] -> [(Int, Int)] -> [(Int, Int)]
+mapByAlamanacMap [rule] seedRanges = concatMap (applyRule rule) seedRanges
+mapByAlamanacMap (rule:rules) seedRanges = mapByAlamanacMap rules $ concatMap (applyRule rule) seedRanges
 
-convertByMaps :: ([Int], [[[Int]]]) -> [Int]
-convertByMaps (seeds, maps)
-        | null maps = seeds
-        | otherwise = convertByMaps (map (mapByAlamanacMap (head maps)) seeds, tail maps)
+convertByMaps :: ([(Int, Int)], [[[Int]]]) -> [(Int, Int)]
+convertByMaps (seedRanges, maps)
+        | null maps = seedRanges
+        | otherwise = [(0, 0)] -- convertByMaps (map (mapByAlamanacMap (head maps)) seeds, tail maps)
 
-solve :: ([Int], [[[Int]]]) -> Int
-solve (seeds, maps) = minimum $ convertByMaps (seeds, maps)
+solve :: ([(Int, Int)], [[[Int]]]) -> Int
+solve (seeds, maps) = minimum $ map fst $ convertByMaps (seeds, maps)
 
 main :: IO ()
 main = do
