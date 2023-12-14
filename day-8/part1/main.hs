@@ -33,13 +33,14 @@ parseMap text = (T.unpack $ head linesText, toNodes 0 [] $ map parseNodeAsTuple 
 
 solveHelper :: String -> [Node] -> Node -> Int -> Int
 solveHelper instructions nodes node steps
-        | name (last nodes) == name node = steps
+        | name node == "ZZZ" = steps
         | currentInstruction == 'R' = solveHelper instructions nodes (nodes!!last (edges node)) (steps + 1)
         | otherwise = solveHelper instructions nodes (nodes!!head (edges node)) (steps + 1)
         where currentInstruction = instructions!!(steps `mod` length instructions)
 
 solve :: (String, [Node]) -> Int
-solve (instructions, nodes) = solveHelper instructions nodes (head nodes) 0
+solve (instructions, nodes) = solveHelper instructions nodes (head $ filter (\node -> name node == "AAA") nodes) 0
+        where namesNodes = map name nodes
 
 main :: IO ()
 main = do
