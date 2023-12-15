@@ -4,8 +4,8 @@ import qualified Data.Text as T
 import qualified Data.Text.Read as TR
 import qualified Data.Text.IO as TIO
 
-import Data.Maybe
-import Data.List
+import Data.Maybe ( fromJust, isJust )
+import Data.List ( elemIndex )
 
 data Node = Node {name :: String, edges :: [Int]} deriving Show
 
